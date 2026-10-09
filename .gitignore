@@ -1,0 +1,14 @@
+/build/
+/dist/
+/bin/
+/obj/
+*.exe
+*.pdb
+*.zip
+position.txt
+diagnose.txt
+self-test.txt
+logging-setup.txt
+*.tmp
+*.bak
+Codex生成图片/

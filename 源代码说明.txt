@@ -1,0 +1,35 @@
+﻿源码包说明
+
+项目：https://github.com/Crazy-Raven/HearthstoneReconnect
+成品：https://github.com/Crazy-Raven/HearthstoneReconnect/releases
+许可：MIT License，Copyright (c) 2026 Crazy-Raven，完整条款见 LICENSE。
+
+主要文件：HsReconnect.cs、AssemblyInfo.cs、app.manifest、HearthstoneReconnect.ico、build.ps1。
+
+在 Windows 10/11 64 位系统中，用 PowerShell 进入项目目录，运行：
+    .\build.ps1
+
+图标已包含在源码包内。编译使用 Windows 的 .NET Framework C# 编译器，不需要额外安装 .NET SDK 或 Python。
+程序是独立应用，运行时直接读取炉石自身日志，并调用 Windows 的连接管理接口。
+
+默认输出 build\HearthstoneReconnect.exe。
+build.ps1 可用 -OutputPath 指定输出 EXE 路径；覆盖正在运行的 EXE 前请退出该程序。
+图标与权限清单嵌入 EXE，运行不需要配套 DLL 或图标文件。
+LICENSE 作为程序集资源嵌入 EXE，单文件也包含 MIT 许可文本。
+
+验证：
+    $test = Start-Process -FilePath (Resolve-Path .\build\HearthstoneReconnect.exe).Path -ArgumentList '--self-test' -Wait -PassThru
+    $test.ExitCode
+    Get-Content "$env:LOCALAPPDATA\HearthstoneReconnect\self-test.txt"
+自测成功退出码为 0，当前包含 33 项构造数据检查。
+只读诊断：
+    Start-Process -FilePath (Resolve-Path .\build\HearthstoneReconnect.exe).Path -ArgumentList '--diagnose' -Wait
+GUI 程序直接调用可能不会等待完成，请保留 Start-Process -Wait。
+自测使用构造数据；诊断读取实际进程/日志/连接状态。两种模式都不会执行拔线。
+尚未进行真实战棋对局断线重连验证。
+GitHub Releases 的 EXE 未做数字签名。
+
+窗口位置与报告保存在 %LOCALAPPDATA%\HearthstoneReconnect\，分发时不要打包个人文件。
+
+.NET Framework 在 Windows 上的运行库说明：
+https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-and-server

@@ -1,0 +1,36 @@
+name: Build and self-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the single EXE
+        run: .\build.ps1
+      - name: Run tests without disconnecting
+        run: |
+          $reportPath = Join-Path $env:LOCALAPPDATA 'HearthstoneReconnect\self-test.txt'
+          $startedAt = Get-Date
+          $testProcess = Start-Process -FilePath '.\build\HearthstoneReconnect.exe' -ArgumentList '--self-test' -WindowStyle Hidden -PassThru -Wait
+          if ($testProcess.ExitCode -ne 0) { throw ('Self-test failed with exit code ' + $testProcess.ExitCode) }
+          $report = Get-Item -LiteralPath $reportPath
+          if ($report.LastWriteTime -lt $startedAt.AddSeconds(-2)) { throw 'Self-test report was not updated' }
+          $content = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw
+          Write-Output $content
+          if (($content -match '(?m)^FAIL ') -or ([regex]::Matches($content, '(?m)^PASS ').Count -ne 33)) { throw 'Expected 33 passing self-tests' }

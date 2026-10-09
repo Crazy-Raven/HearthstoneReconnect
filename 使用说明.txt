@@ -1,0 +1,84 @@
+﻿炉石战棋拔线 · 独立悬浮按钮
+
+适用：Windows 10 / 11，64 位系统。
+这是独立小程序，无须安装火石、Overwolf、Python 或 .NET SDK。
+普通 Windows 10 / 11 已有可运行本程序的 .NET Framework。
+
+下载与启动
+最新版单文件：
+https://github.com/Crazy-Raven/HearthstoneReconnect/releases/latest/download/HearthstoneReconnect.exe
+把 HearthstoneReconnect.exe 放在方便的位置，双击打开。无需安装器或配套文件。
+
+首次使用
+1. 下载并打开 HearthstoneReconnect.exe。
+2. 如果这台电脑没有开启炉石日志，先完全退出炉石，右键小按钮 → “开启炉石日志…”。
+   点击这个菜单会配置当前 Windows 用户的炉石日志，并在有旧配置时保存时间戳备份。
+   保留其它插件的设置，仅合并 Net、Power、GameNetLogger 中需要的日志输出项。
+   炉石仍在运行时会提示先退出，不会修改配置。
+   操作后重新启动炉石。已经通过火石等工具开启日志的用户，也可直接尝试下一步。
+3. 点击按钮上的“管理员运行”，在 Windows 权限提示中点“是”。
+   也可以右键 HearthstoneReconnect.exe → 以管理员身份运行。
+   管理员权限用于重置当前对局的连接；仅打开普通窗口不会自动提权。
+4. 进入酒馆战棋对局。工具识别本次对局的唯一 IPv4 TCP 连接后，按钮显示“拔线”。
+5. 战斗开始后，手动点击“拔线”，或按 Ctrl + Alt + F8。
+   工具重置当前对局的一条连接；炉石是否以及何时重连取决于游戏。
+   每次成功重置后冷却 15 秒。按钮的重连倒计时不代表已经重连成功。
+
+窗口与操作
+- 窗口约 136×44，Windows 显示缩放会相应放大。
+- 拖动按钮左侧的小点移动窗口，下次打开会记住位置。
+- 鼠标悬停可看详细状态；右键可开启日志、查看快捷键状态、退出。
+- “等待炉石”“等待对局”表示暂时没有可确认的连接，不会进行拔线。
+- 独占全屏游戏可能遮住悬浮按钮，可使用快捷键，或改为窗口/无边框模式。
+- 快捷键被其它程序占用时，右键菜单提示“快捷键被占用 · 请点击按钮”。
+
+按钮一直等待时
+- 先取得管理员权限，再确认已经进入对局。
+- 确认日志已经开启，并在开启后重新启动过炉石。
+- 工具只读当前炉石进程对应的 Logs\Hearthstone_... 会话，不使用上一次游戏的地址。
+- 读取不到当前游戏位置时会保持等待，不猜测炉石安装在哪个磁盘。
+- 大厅、对局结束、日志缺少有效对局地址时，正常等待。
+- 多个 Hearthstone.exe、同地址存在多个连接，或只有 IPv6 连接时，保持停用。
+- 读取失败会每秒只读重试；重置失败会显示 Windows 错误码。
+
+文件与数据位置
+程序：HearthstoneReconnect.exe 所在的位置。
+窗口位置与检查报告：%LOCALAPPDATA%\HearthstoneReconnect\
+  position.txt      窗口位置
+  diagnose.txt      只读诊断报告
+  self-test.txt     构造数据自测报告
+  logging-setup.txt 明确通过命令开启日志时的结果
+升级时如果原程序文件夹有 position.txt，会在首次打开时复制到新的数据目录，保留原文件。
+炉石日志配置：%LOCALAPPDATA%\Blizzard\Hearthstone\log.config
+旧配置备份：同一文件夹中的 log.config.backup-日期时间-随机后缀
+未改动的配置不会重复备份。
+
+使用范围
+- 独立于火石，不受火石的地区开关限制，也不会把按钮加回火石设置。
+- 不自动识别战棋模式，只识别炉石本次对局连接，请仅在你要操作的战棋对局中手动使用。
+- 只处理唯一 Hearthstone.exe 进程的唯一匹配 IPv4 TCP 连接。
+- 要求连接处于 ESTABLISHED 状态；登录端口 1119 不会被选中。
+- 只有点击“拔线”或按快捷键会尝试断线。启动、轮询、预览、诊断和自测不会断线。
+- 不修改防火墙或火石文件，不设置开机启动或计划任务。
+- 只有主动选择“开启炉石日志…”或明确使用 --enable-logging 参数时，才会配置日志。
+- 构造数据自测不等于实际对局验证。目前尚未完成真实对局断线重连实测。
+- 发布的 EXE 未做数字签名。
+
+检查命令
+在程序文件夹打开 PowerShell。GUI 程序请通过 Start-Process -Wait 等待命令完成。
+  Start-Process -FilePath (Resolve-Path .\HearthstoneReconnect.exe).Path -ArgumentList '--diagnose' -Wait
+  只读检查，不弹出管理员提示，不断线；报告写到上述数据目录。
+  $test = Start-Process -FilePath (Resolve-Path .\HearthstoneReconnect.exe).Path -ArgumentList '--self-test' -Wait -PassThru
+  $test.ExitCode
+  仅使用构造数据测试日志解析、连接筛选及配置合并，不读取真实游戏日志或调用断线 API。
+  Start-Process -FilePath (Resolve-Path .\HearthstoneReconnect.exe).Path -ArgumentList '--enable-logging' -Wait
+  明确开启当前用户的炉石日志；先退出炉石。结果写到 logging-setup.txt。
+诊断不输出日志原文、账号或 game/client/spectateKey。
+反馈问题时请避免上传原始游戏日志、个人配置或备份。
+
+源码与许可
+项目：https://github.com/Crazy-Raven/HearthstoneReconnect
+成品放在 GitHub Releases，源码可自行构建。
+MIT License，Copyright (c) 2026 Crazy-Raven。
+分发或修改时请保留版权与许可声明。
+不要把本机 position.txt、diagnose.txt、自测报告或备份文件加进分发包。
